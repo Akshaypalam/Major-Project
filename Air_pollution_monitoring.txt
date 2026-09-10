@@ -1,0 +1,332 @@
+#define BLYNK_TEMPLATE_ID "TMPL3vRtshaYg"
+#define BLYNK_TEMPLATE_NAME "Air Quality Monitoring"
+#define BLYNK_AUTH_TOKEN "n5Xgc46MDPd7ieYGsfK9qReLEd4oqERy"
+
+#define BLYNK_PRINT Serial
+
+#include <WiFi.h>
+#include <BlynkSimpleEsp32.h>
+#include <DHT.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <HTTPClient.h>
+
+// =====================================================
+// Wi-Fi
+// =====================================================
+
+char ssid[] = "realme GT 2";
+char pass[] = "Akshay12";
+
+// =====================================================
+// ThingSpeak
+// =====================================================
+
+String apiKey = "KFIHXY625IRCYFSC";
+
+const char* thingSpeakServer =
+    "http://api.thingspeak.com/update";
+
+
+#define DHTPIN 2
+#define DHTTYPE DHT11
+
+DHT dht(DHTPIN, DHTTYPE);
+
+
+
+#define GAS_PIN 32
+
+
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+
+
+BlynkTimer timer;
+
+
+// =====================================================
+// SEND DATA TO THINGSPEAK
+// =====================================================
+
+void sendToThingSpeak(float temperature,
+                      float humidity,
+                      int gasValue)
+{
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.println("WiFi disconnected!");
+    return;
+  }
+
+  HTTPClient http;
+
+  String url = String(thingSpeakServer);
+
+  url += "?api_key=";
+  url += apiKey;
+
+  url += "&field1=";
+  url += String(temperature);
+
+  url += "&field2=";
+  url += String(humidity);
+
+  url += "&field3=";
+  url += String(gasValue);
+
+  Serial.println();
+  Serial.println("Sending data to ThingSpeak...");
+
+  http.begin(url);
+
+  int httpResponseCode = http.GET();
+
+  if (httpResponseCode > 0)
+  {
+    Serial.print("ThingSpeak Response: ");
+    Serial.println(httpResponseCode);
+
+    String response = http.getString();
+
+    Serial.print("ThingSpeak Entry ID: ");
+    Serial.println(response);
+  }
+  else
+  {
+    Serial.print("ThingSpeak Error: ");
+    Serial.println(httpResponseCode);
+  }
+
+  http.end();
+}
+
+
+// =====================================================
+// READ SENSOR AND SEND TO BLYNK + THINGSPEAK
+// =====================================================
+
+void sendSensor()
+{
+  float humidity = dht.readHumidity();
+  float temperature = dht.readTemperature();
+
+  int gasValue = analogRead(GAS_PIN);
+
+
+  // Check DHT11
+  if (isnan(humidity) || isnan(temperature))
+  {
+    Serial.println("Failed to read DHT11!");
+
+    return;
+  }
+
+
+ 
+
+  Serial.println("--------------------------------");
+
+  Serial.print("Temperature: ");
+  Serial.print(temperature);
+  Serial.println(" C");
+
+  Serial.print("Humidity: ");
+  Serial.print(humidity);
+  Serial.println(" %");
+
+  Serial.print("MQ135 Value: ");
+  Serial.println(gasValue);
+
+
+  
+
+  if (gasValue < 600)
+  {
+    Serial.println("Air Status: Fresh Air");
+  }
+  else
+  {
+    Serial.println("Air Status: Bad Air");
+  }
+
+
+ 
+
+  Blynk.virtualWrite(V0, temperature);
+
+  Blynk.virtualWrite(V1, humidity);
+
+  Blynk.virtualWrite(V2, gasValue);
+
+
+ 
+
+  sendToThingSpeak(
+    temperature,
+    humidity,
+    gasValue
+  );
+}
+
+
+
+
+void setup()
+{
+  Serial.begin(115200);
+
+  Serial.println();
+  Serial.println("================================");
+  Serial.println("Air Quality Monitoring System");
+  Serial.println("================================");
+
+
+  
+
+  dht.begin();
+
+
+  
+
+  Wire.begin();
+
+  lcd.init();
+
+  lcd.backlight();
+
+  lcd.clear();
+
+  lcd.setCursor(0, 0);
+  lcd.print("Air Quality");
+
+  lcd.setCursor(0, 1);
+  lcd.print("Monitoring");
+
+  delay(2000);
+
+  lcd.clear();
+
+
+  
+
+  Serial.println("Connecting to Blynk...");
+
+  Blynk.begin(
+    BLYNK_AUTH_TOKEN,
+    ssid,
+    pass
+  );
+
+  Serial.println("Blynk connected!");
+
+
+  
+
+  timer.setInterval(
+    15000L,
+    sendSensor
+  );
+}
+
+
+
+void loop()
+{
+  Blynk.run();
+
+  timer.run();
+
+
+  // ===================================================
+  // READ SENSOR FOR LCD
+  // ===================================================
+
+  float humidity = dht.readHumidity();
+
+  float temperature = dht.readTemperature();
+
+  int gasValue = analogRead(GAS_PIN);
+
+
+  if (isnan(humidity) || isnan(temperature))
+  {
+    Serial.println("DHT11 Error");
+
+    return;
+  }
+
+
+  
+
+  lcd.clear();
+
+  lcd.setCursor(0, 0);
+
+  lcd.print("Temperature");
+
+  lcd.setCursor(0, 1);
+
+  lcd.print(temperature, 1);
+
+  lcd.print((char)223);
+
+  lcd.print("C");
+
+  delay(2000);
+
+
+ 
+  lcd.clear();
+
+  lcd.setCursor(0, 0);
+
+  lcd.print("Humidity");
+
+  lcd.setCursor(0, 1);
+
+  lcd.print(humidity, 1);
+
+  lcd.print("%");
+
+  delay(2000);
+
+
+  
+
+  lcd.clear();
+
+  lcd.setCursor(0, 0);
+
+  lcd.print("Gas:");
+
+  lcd.print(gasValue);
+
+
+  lcd.setCursor(0, 1);
+
+
+  if (gasValue < 600)
+  {
+    lcd.print("Fresh Air");
+  }
+  else
+  {
+    lcd.print("Bad Air");
+  }
+
+
+ 
+
+  if (gasValue > 600)
+  {
+    Blynk.logEvent(
+      "pollution_alert",
+      "Bad Air detected"
+    );
+  }
+
+
+  delay(2000);
+} 
