@@ -1,0 +1,264 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Air Quality Health Monitoring</title>
+
+    <!-- Existing CSS -->
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <!-- Leaflet Map CSS -->
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <!-- Additional styling -->
+    <style>
+        .map-section {
+            background: white;
+            padding: 25px;
+            margin-top: 25px;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px #ddd;
+        }
+
+        #sensorMap {
+            height: 400px;
+            width: 100%;
+            border-radius: 10px;
+            margin-top: 15px;
+            z-index: 1;
+        }
+
+        .location-info {
+            margin-top: 12px;
+            color: #555;
+            font-size: 14px;
+            overflow-wrap: anywhere;
+        }
+
+        #mq135_status {
+            font-size: 15px;
+            font-weight: bold;
+            margin-top: 12px;
+            color: #176b57;
+        }
+
+        .sensor-note {
+            font-size: 13px;
+            color: #666;
+            margin-top: 8px;
+        }
+
+        @media (max-width: 600px) {
+            #sensorMap {
+                height: 300px;
+            }
+
+            .map-section {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <h1>Air Quality Health Monitoring System</h1>
+        <p>Real-Time IoT Air Quality Monitoring Dashboard</p>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+
+        <h2 class="section-title">
+            Live Sensor Data
+        </h2>
+
+        <!-- Sensor Cards -->
+        <div class="cards">
+
+            <!-- Temperature -->
+            <div class="card">
+                <h3>🌡️ Temperature</h3>
+
+                <div class="value" id="temperature">
+                    {{ temperature }}
+                </div>
+
+                <div class="unit">°C</div>
+            </div>
+
+            <!-- Humidity -->
+            <div class="card">
+                <h3>💧 Humidity</h3>
+
+                <div class="value" id="humidity">
+                    {{ humidity }}
+                </div>
+
+                <div class="unit">%</div>
+            </div>
+
+            <!-- MQ135 -->
+            <div class="card">
+                <h3>🫁 MQ135</h3>
+
+                <div class="value" id="mq135">
+                    {{ mq135 }}
+                </div>
+
+                <div class="unit">Raw ADC reading — not ppm</div>
+
+                <p id="mq135_status">
+                    {{ mq135_status }}
+                </p>
+
+                <p class="sensor-note">
+                    Status is based on a provisional raw-reading threshold.
+                </p>
+            </div>
+
+        </div>
+
+        <!-- Air Quality Status -->
+        <div class="status-box">
+
+            <h2>Air Quality Sensor Status</h2>
+
+            <p>
+                The MQ135 indicator shows changes in the raw sensor
+                reading. It is not an official AQI measurement or
+                a calibrated gas concentration.
+            </p>
+
+            <span class="status">
+                Monitoring Active
+            </span>
+
+        </div>
+
+        <!-- Sensor Location Map -->
+        <div class="map-section">
+
+            <h2>📍 Sensor Location</h2>
+
+            <p>
+                Location of the installed ESP32 air-quality monitoring sensor.
+            </p>
+
+            <div id="sensorMap"></div>
+
+            <div class="location-info">
+                Latitude: 13.131599140453496<br>
+                Longitude: 77.58993601352053
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+
+        <p>
+            Cost-Effective IoT Framework for Air Quality Monitoring
+        </p>
+
+        <p>
+            Data source: ESP32 → ThingSpeak
+        </p>
+
+    </div>
+
+    <!-- Leaflet Map JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Initialize Sensor Map -->
+    <script>
+        // Fixed sensor coordinates
+        const sensorLat = 13.131599140453496;
+        const sensorLng = 77.58993601352053;
+
+        // Create map
+        const map = L.map("sensorMap").setView(
+            [sensorLat, sensorLng],
+            16
+        );
+
+        // Load OpenStreetMap tiles
+        L.tileLayer(
+            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            {
+                attribution:
+                    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19
+            }
+        ).addTo(map);
+
+        // Add sensor marker
+        L.marker([sensorLat, sensorLng])
+            .addTo(map)
+            .bindPopup(
+                "<b>ESP32 Air Quality Sensor</b><br>" +
+                "Air Quality Monitoring Station"
+            )
+            .openPopup();
+    </script>
+
+    <!-- Automatic Sensor Data Update -->
+    <script>
+        async function updateData() {
+
+            try {
+                const response = await fetch("/data");
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch sensor data");
+                }
+
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // Update temperature
+                document.getElementById("temperature").innerText =
+                    data.temperature ?? "--";
+
+                // Update humidity
+                document.getElementById("humidity").innerText =
+                    data.humidity ?? "--";
+
+                // Update raw MQ135 reading
+                document.getElementById("mq135").innerText =
+                    data.mq135 ?? "--";
+
+                // Update MQ135 status
+                document.getElementById("mq135_status").innerText =
+                    data.mq135_status ?? "Status unavailable";
+
+            } catch (error) {
+                console.error(
+                    "Error getting sensor data:",
+                    error
+                );
+
+                document.getElementById("mq135_status").innerText =
+                    "Sensor data temporarily unavailable";
+            }
+        }
+
+        // Refresh sensor readings every 60 seconds
+        setInterval(updateData, 60000);
+    </script>
+
+</body>
+</html>

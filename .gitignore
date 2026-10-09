@@ -1,0 +1,9 @@
+
+# Python virtual environment and cache
+venv/
+__pycache__/
+*.py[cod]
+
+# Large raw datasets (keep locally)
+air-toxicity-and-chronic-respiratory-diseases-us.zip
+pollution_data/*.parquet

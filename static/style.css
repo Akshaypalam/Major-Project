@@ -1,0 +1,121 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background: #f4f7fb;
+    color: #222;
+}
+
+/* Header */
+
+.header {
+    background: #1f6f5c;
+    color: white;
+    padding: 25px;
+    text-align: center;
+}
+
+.header h1 {
+    font-size: 30px;
+    margin-bottom: 8px;
+}
+
+.header p {
+    font-size: 15px;
+}
+
+/* Main container */
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 30px auto;
+}
+
+/* Section title */
+
+.section-title {
+    font-size: 22px;
+    margin-bottom: 20px;
+}
+
+/* Sensor cards */
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.card {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    text-align: center;
+}
+
+.card h3 {
+    color: #555;
+    margin-bottom: 15px;
+}
+
+.value {
+    font-size: 32px;
+    font-weight: bold;
+    color: #1f6f5c;
+}
+
+.unit {
+    color: #777;
+    margin-top: 5px;
+}
+
+/* Air quality section */
+
+.status-box {
+    margin-top: 30px;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.status {
+    margin-top: 15px;
+    display: inline-block;
+    padding: 10px 25px;
+    border-radius: 20px;
+    background: #f1c40f;
+    font-weight: bold;
+}
+
+/* Footer */
+
+.footer {
+    text-align: center;
+    margin-top: 40px;
+    padding: 20px;
+    color: #777;
+}
+
+/* Mobile */
+
+@media (max-width: 700px) {
+
+    .cards {
+        grid-template-columns: 1fr;
+    }
+
+    .header h1 {
+        font-size: 24px;
+    }
+
+    .container {
+        width: 94%;
+    }
+}

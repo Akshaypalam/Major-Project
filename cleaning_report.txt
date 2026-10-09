@@ -1,0 +1,22 @@
+DATA CLEANING REPORT
+====================
+Original rows: 4500
+Original columns: 172
+Rows after cleaning: 4380
+Columns after cleaning: 15
+Environmental features originally: 167
+Environmental features retained: 10
+Features removed for excessive missingness: 157
+Rows removed: 120
+
+Retained environmental features and missing percentages:
+HAPS__arsenic_pm2_5_lc: 12.00% missing
+HAPS__benzene: 39.87% missing
+HAPS__cadmium_pm2_5_lc: 36.00% missing
+HAPS__chromium_pm2_5_lc: 12.00% missing
+HAPS__lead_pm2_5_lc: 12.00% missing
+HAPS__manganese_pm2_5_lc: 12.00% missing
+HAPS__nickel_pm2_5_lc: 12.00% missing
+NONOxNOy__nitric_oxide_no: 17.60% missing
+NONOxNOy__oxides_of_nitrogen_nox: 24.27% missing
+VOCS__benzene: 39.87% missing
